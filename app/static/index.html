@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flight Screensaver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    body { margin:0; background:black; }
+    #map { height:100vh; width:100vw; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+const map = L.map('map', {
+  zoomControl: false
+}).setView([52.3, 4.8], 10);
+
+// Dark map (nice for screensaver)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png')
+  .addTo(map);
+
+let markers = [];
+
+// Plane icon
+const planeIcon = L.divIcon({
+  html: "✈️",
+  className: "",
+  iconSize: [20, 20]
+});
+
+async function updateFlights() {
+  try {
+    const res = await fetch('/api/flights');
+    const data = await res.json();
+
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    data.forEach(f => {
+      const marker = L.marker([f.lat, f.lon], {
+        icon: planeIcon
+      }).addTo(map);
+
+      marker.bindTooltip(f.callsign || "Unknown");
+
+      markers.push(marker);
+    });
+
+  } catch (e) {
+    console.error("Error fetching flights", e);
+  }
+}
+
+// update every 5 seconds
+setInterval(updateFlights, 5000);
+updateFlights();
+
+</script>
+
+</body>
+</html>
